@@ -21,7 +21,7 @@ class Sucursal {
         const pais = req.body.pais;
         const ciudad = req.body.ciudad;
         const direccion = req.body.direccion;
-        const fecha = (0, moment_1.default)().format('YYYY-MM-DD');
+        const fecha = (0, moment_1.default)().format("YYYY-MM-DD");
         const nuevaSucursal = new sucursalModel_1.default({
             idCreador: idCreador,
             idReferencia: this.idRef,
@@ -30,9 +30,9 @@ class Sucursal {
             ubicacion: {
                 pais: pais,
                 ciudad: ciudad,
-                direccion: direccion
+                direccion: direccion,
             },
-            fecha_creacion: fecha
+            fecha_creacion: fecha,
         });
         // guardar la sucursal
         nuevaSucursal.save((err, sucursalDB) => {
@@ -40,21 +40,21 @@ class Sucursal {
                 return resp.json({
                     ok: false,
                     mensaje: `No se pudo crear la Sucursal`,
-                    err
+                    err,
                 });
             }
             else {
                 return resp.json({
                     ok: true,
                     mensaje: `Sucursal creada`,
-                    sucursalDB
+                    sucursalDB,
                 });
             }
         });
     }
     // Editar sucursal
     editarSucursal(req, resp) {
-        const id = req.get('id');
+        const id = req.get("id");
         const nombre = req.body.nombre;
         const telefono = req.body.telefono;
         const pais = req.body.pais;
@@ -62,7 +62,7 @@ class Sucursal {
         const direccion = req.body.direccion;
         // const estadoHeader: string = req.get('estado');
         // const estado: boolean = castEstado(estadoHeader);
-        const estado = req.get('estado');
+        const estado = req.get("estado");
         // console.log(estado);
         const query = {
             nombre: nombre,
@@ -70,22 +70,22 @@ class Sucursal {
             ubicacion: {
                 pais: pais,
                 ciudad: ciudad,
-                direccion: direccion
+                direccion: direccion,
             },
-            estado: estado
+            estado: estado,
         };
         sucursalModel_1.default.findById(id, (err, sucursalDB) => {
             if (err) {
                 return resp.json({
                     ok: false,
                     mensaje: `Error interno`,
-                    err
+                    err,
                 });
             }
             if (!sucursalDB) {
                 return resp.json({
                     ok: false,
-                    mensaje: `No se encontró una sucursal con ese ID en la base de datos`
+                    mensaje: `No se encontró una sucursal con ese ID en la base de datos`,
                 });
             }
             if (!query.nombre) {
@@ -111,97 +111,98 @@ class Sucursal {
                     return resp.json({
                         ok: false,
                         mensaje: `No se pudo editar la Sucursal`,
-                        err
+                        err,
                     });
                 }
                 if (!sucursalDB) {
                     return resp.json({
                         ok: false,
                         mensaje: `No existe la sucursal que quiere Editar`,
-                        err
+                        err,
                     });
                 }
                 return resp.json({
                     ok: true,
                     mensaje: `Sucursal actualizada`,
-                    sucursalDBActualizada
+                    sucursalDBActualizada,
                 });
             });
         });
     }
     // Obtener sucursal por ID
     obtenerSucursal(req, resp) {
-        const id = req.get('id');
+        const id = req.get("id");
         sucursalModel_1.default.findById(id, (err, sucursalDB) => {
             if (err) {
                 return resp.json({
                     ok: false,
                     mensaje: `Error al búscar Sucursal o no existe`,
-                    err
+                    err,
                 });
             }
             if (!sucursalDB) {
                 return resp.json({
                     ok: false,
-                    mensaje: `No existe la sucursal en la base de datos`
+                    mensaje: `No existe la sucursal en la base de datos`,
                 });
             }
             return resp.json({
                 ok: true,
-                sucursalDB
+                sucursalDB,
             });
         });
     }
     // Obtener sucursal por ID referencia
     obtenerSucursalIdRef(req, resp) {
-        const id = req.get('idReferencia');
+        const id = req.get("idReferencia");
         sucursalModel_1.default.findOne({ idReferencia: id }, (err, sucursalDB) => {
             if (err) {
                 return resp.json({
                     ok: false,
                     mensaje: `Error al búscar Sucursal o no existe`,
-                    err
+                    err,
                 });
             }
             if (!sucursalDB) {
                 return resp.json({
                     ok: false,
-                    mensaje: `No existe la sucursal en la base de datos`
+                    mensaje: `No existe la sucursal en la base de datos`,
                 });
             }
             return resp.json({
                 ok: true,
-                sucursalDB
+                sucursalDB,
             });
         });
     }
     // obtener todas las sucursales
     obtenerTodas(req, resp) {
-        const estado = req.get('estado');
+        const estado = req.get("estado");
         // const estado: boolean = castEstado(estadoHeader);
         sucursalModel_1.default.find({}, (err, sucursalesDB) => {
+            // estado: estado
             if (err) {
                 return resp.json({
                     ok: false,
                     mensaje: `Error al búscar Sucursales o no existe ninguna`,
-                    err
+                    err,
                 });
             }
             if (!sucursalesDB) {
                 return resp.json({
                     ok: false,
-                    mensaje: `No hay sucursales en la Base de datos`
+                    mensaje: `No hay sucursales en la Base de datos`,
                 });
             }
             return resp.json({
                 ok: true,
-                sucursalesDB
+                sucursalesDB,
             });
         });
     }
     // Eliminar una sucursal
     eliminarSucursal(req, resp) {
-        const id = req.get('id');
+        const id = req.get("id");
         // // Eliminar ID actual de IDsJson.json
         // const eliminarIDActual = (idRef: string) => {
         //     const pathIDsJson = path.resolve(__dirname, `../uploads/assets/${this.sucursalIDs}`);
@@ -219,13 +220,13 @@ class Sucursal {
                 return resp.json({
                     ok: false,
                     mensaje: `Error al eliminar sucursal o no existe`,
-                    err
+                    err,
                 });
             }
             if (!sucursalDB) {
                 return resp.json({
                     ok: false,
-                    mensaje: `No existe la sucursal que desea eliminar`
+                    mensaje: `No existe la sucursal que desea eliminar`,
                 });
             }
             // const idRef = sucursalDB?.idReferencia || '';
@@ -233,7 +234,31 @@ class Sucursal {
             return resp.json({
                 ok: true,
                 mensaje: `Sucursal eliminada`,
-                sucursalDB
+                sucursalDB,
+            });
+        });
+    }
+    obtenerSucursalCriterio(req, resp) {
+        const criterio = req.get("criterio") || "";
+        const regExpCrit = new RegExp(criterio, "i");
+        sucursalModel_1.default.find({ nombre: regExpCrit }, (err, sucursalesDB) => {
+            // estado: estado
+            if (err) {
+                return resp.json({
+                    ok: false,
+                    mensaje: `Error al búscar Sucursales o no existe ninguna`,
+                    err,
+                });
+            }
+            if (!sucursalesDB) {
+                return resp.json({
+                    ok: false,
+                    mensaje: `No hay sucursales en la Base de datos`,
+                });
+            }
+            return resp.json({
+                ok: true,
+                sucursalesDB,
             });
         });
     }

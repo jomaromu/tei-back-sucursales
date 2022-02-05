@@ -52,6 +52,16 @@ sucursalRouter.get('/obtenerTodasSucursales', [verificaToken], (req: Request, re
 });
 
 // ==================================================================== //
+// Obtener por criterio
+// ==================================================================== //
+sucursalRouter.get('/obtenerSucursalCriterio', [verificaToken], (req: Request, resp: Response) => {
+
+    const obtenerSucursalCriterio = new Sucursal();
+    obtenerSucursalCriterio.obtenerSucursalCriterio(req, resp);
+
+});
+
+// ==================================================================== //
 // Eliminar una sucursal
 // ==================================================================== //
 sucursalRouter.delete('/eliminarSucursal', [verificaToken, eliminarUsuario], (req: Request, resp: Response) => {
