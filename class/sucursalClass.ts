@@ -218,29 +218,32 @@ export class Sucursal {
     const estado: boolean = req.get("estado");
     // const estado: boolean = castEstado(estadoHeader);
 
-    sucursalModel.find({}, (err: CallbackError, sucursalesDB: Document) => {
-      // estado: estado
+    sucursalModel.find(
+      { estado: true },
+      (err: CallbackError, sucursalesDB: Document) => {
+        // estado: estado
 
-      if (err) {
+        if (err) {
+          return resp.json({
+            ok: false,
+            mensaje: `Error al búscar Sucursales o no existe ninguna`,
+            err,
+          });
+        }
+
+        if (!sucursalesDB) {
+          return resp.json({
+            ok: false,
+            mensaje: `No hay sucursales en la Base de datos`,
+          });
+        }
+
         return resp.json({
-          ok: false,
-          mensaje: `Error al búscar Sucursales o no existe ninguna`,
-          err,
+          ok: true,
+          sucursalesDB,
         });
       }
-
-      if (!sucursalesDB) {
-        return resp.json({
-          ok: false,
-          mensaje: `No hay sucursales en la Base de datos`,
-        });
-      }
-
-      return resp.json({
-        ok: true,
-        sucursalesDB,
-      });
-    });
+    );
   }
 
   // Eliminar una sucursal

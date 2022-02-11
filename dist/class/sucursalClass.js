@@ -179,7 +179,7 @@ class Sucursal {
     obtenerTodas(req, resp) {
         const estado = req.get("estado");
         // const estado: boolean = castEstado(estadoHeader);
-        sucursalModel_1.default.find({}, (err, sucursalesDB) => {
+        sucursalModel_1.default.find({ estado: true }, (err, sucursalesDB) => {
             // estado: estado
             if (err) {
                 return resp.json({
