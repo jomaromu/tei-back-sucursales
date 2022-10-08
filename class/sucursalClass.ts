@@ -1,8 +1,7 @@
 import { Response, Request } from "express";
 import moment from "moment";
-import { CallbackError } from "mongoose";
-import path from "path";
-import fs from "fs";
+import { CallbackError, Mongoose } from "mongoose";
+const mongoose = require("mongoose");
 import { nanoid } from "nanoid";
 
 // Modelo
@@ -10,6 +9,9 @@ import sucursalModel from "../models/sucursalModel";
 
 // Interfaces
 import { SucursalModel } from "../interfaces/sucursal";
+
+// socket
+import Server from "./server";
 
 export class Sucursal {
   public idRef: string;
@@ -21,25 +23,22 @@ export class Sucursal {
 
   // Crear sucursal
   nuevaSucursal(req: any, resp: Response): void {
-    const idCreador: any = req.usuario._id;
+    const idCreador: any = new mongoose.Types.ObjectId(req.usuario._id);
+    const estado: boolean = req.body.estado;
     const nombre: string = req.body.nombre;
     const telefono: string = req.body.telefono;
-    const pais: string = req.body.pais;
-    const ciudad: string = req.body.ciudad;
+    const provincia: any = req.body.provincia;
     const direccion: string = req.body.direccion;
-    const fecha: string = moment().format("YYYY-MM-DD");
+    const fecha: string = moment().format("DD-MM-YYYY");
 
     const nuevaSucursal = new sucursalModel({
       idCreador: idCreador,
-      idReferencia: this.idRef,
-      nombre: nombre,
-      telefono: telefono,
-      ubicacion: {
-        pais: pais,
-        ciudad: ciudad,
-        direccion: direccion,
-      },
+      nombre,
+      telefono,
+      direccion,
+      provincia,
       fecha_creacion: fecha,
+      estado,
     });
 
     // guardar la sucursal
@@ -51,6 +50,10 @@ export class Sucursal {
           err,
         });
       } else {
+        const server = Server.instance;
+        server.io.emit("cargar-sucursales", {
+          ok: true,
+        });
         return resp.json({
           ok: true,
           mensaje: `Sucursal creada`,
@@ -60,31 +63,49 @@ export class Sucursal {
     });
   }
 
+  // Obtener todas las sucursales
+  async obtenerSucs(req: any, resp: Response): Promise<any> {
+    const respSuc = await sucursalModel.aggregate([
+      {
+        $lookup: {
+          from: "userworkers",
+          localField: "idCreador",
+          foreignField: "_id",
+          as: "Usuario",
+        },
+      },
+    ]);
+
+    if (respSuc) {
+      return resp.json({
+        ok: true,
+        sucursalesDB: respSuc,
+      });
+    } else {
+      return resp.json({
+        ok: false,
+        mensaje: "Error al obtener sucursales",
+      });
+    }
+  }
+
   // Editar sucursal
   editarSucursal(req: any, resp: Response): void {
-    const id = req.get("id");
+    const id: string = req.body.id;
+    const estado: boolean = req.body.estado;
     const nombre: string = req.body.nombre;
     const telefono: string = req.body.telefono;
-    const pais: string = req.body.pais;
-    const ciudad: string = req.body.ciudad;
+    const provincia: any = req.body.provincia;
     const direccion: string = req.body.direccion;
-
-    // const estadoHeader: string = req.get('estado');
-    // const estado: boolean = castEstado(estadoHeader);
-
-    const estado: boolean = req.get("estado");
 
     // console.log(estado);
 
     const query = {
-      nombre: nombre,
-      telefono: telefono,
-      ubicacion: {
-        pais: pais,
-        ciudad: ciudad,
-        direccion: direccion,
-      },
-      estado: estado,
+      nombre,
+      telefono,
+      direccion,
+      provincia,
+      estado,
     };
 
     sucursalModel.findById(
@@ -111,16 +132,13 @@ export class Sucursal {
         if (!query.telefono) {
           query.telefono = sucursalDB.telefono;
         }
-        if (!query.ubicacion.pais) {
-          query.ubicacion.pais = sucursalDB.ubicacion.pais;
+        if (!query.provincia) {
+          query.provincia = sucursalDB.provincia;
         }
-        if (!query.ubicacion.ciudad) {
-          query.ubicacion.ciudad = sucursalDB.ubicacion.ciudad;
+        if (!query.direccion) {
+          query.direccion = sucursalDB.direccion;
         }
-        if (!query.ubicacion.direccion) {
-          query.ubicacion.direccion = sucursalDB.ubicacion.direccion;
-        }
-        if (!query.estado) {
+        if (query.estado === undefined || query.estado === null) {
           query.estado = sucursalDB.estado;
         }
 
@@ -128,7 +146,7 @@ export class Sucursal {
           id,
           query,
           { new: true },
-          (err: CallbackError, sucursalDBActualizada: any) => {
+          (err: CallbackError, sucursalDB: any) => {
             if (err) {
               return resp.json({
                 ok: false,
@@ -144,11 +162,14 @@ export class Sucursal {
                 err,
               });
             }
-
+            const server = Server.instance;
+            server.io.emit("cargar-sucursales", {
+              ok: true,
+            });
             return resp.json({
               ok: true,
               mensaje: `Sucursal actualizada`,
-              sucursalDBActualizada,
+              sucursalDB,
             });
           }
         );
@@ -156,119 +177,9 @@ export class Sucursal {
     );
   }
 
-  // Obtener sucursal por ID
-  obtenerSucursal(req: Request, resp: Response): void {
-    const id = req.get("id");
-
-    sucursalModel.findById(id, (err: CallbackError, sucursalDB: Document) => {
-      if (err) {
-        return resp.json({
-          ok: false,
-          mensaje: `Error al búscar Sucursal o no existe`,
-          err,
-        });
-      }
-
-      if (!sucursalDB) {
-        return resp.json({
-          ok: false,
-          mensaje: `No existe la sucursal en la base de datos`,
-        });
-      }
-
-      return resp.json({
-        ok: true,
-        sucursalDB,
-      });
-    });
-  }
-
-  // Obtener sucursal por ID referencia
-  obtenerSucursalIdRef(req: Request, resp: Response): void {
-    const id = req.get("idReferencia");
-
-    sucursalModel.findOne(
-      { idReferencia: id },
-      (err: CallbackError, sucursalDB: Document) => {
-        if (err) {
-          return resp.json({
-            ok: false,
-            mensaje: `Error al búscar Sucursal o no existe`,
-            err,
-          });
-        }
-
-        if (!sucursalDB) {
-          return resp.json({
-            ok: false,
-            mensaje: `No existe la sucursal en la base de datos`,
-          });
-        }
-
-        return resp.json({
-          ok: true,
-          sucursalDB,
-        });
-      }
-    );
-  }
-
-  // obtener todas las sucursales
-  obtenerTodas(req: any, resp: Response): any {
-    const estado: boolean = req.get("estado");
-    // const estado: boolean = castEstado(estadoHeader);
-
-    sucursalModel.find(
-      { estado: true },
-      (err: CallbackError, sucursalesDB: Document) => {
-        // estado: estado
-
-        if (err) {
-          return resp.json({
-            ok: false,
-            mensaje: `Error al búscar Sucursales o no existe ninguna`,
-            err,
-          });
-        }
-
-        if (!sucursalesDB) {
-          return resp.json({
-            ok: false,
-            mensaje: `No hay sucursales en la Base de datos`,
-          });
-        }
-
-        return resp.json({
-          ok: true,
-          sucursalesDB,
-        });
-      }
-    );
-  }
-
   // Eliminar una sucursal
   eliminarSucursal(req: Request, resp: Response): any {
     const id = req.get("id");
-
-    // // Eliminar ID actual de IDsJson.json
-    // const eliminarIDActual = (idRef: string) => {
-
-    //     const pathIDsJson = path.resolve(__dirname, `../uploads/assets/${this.sucursalIDs}`);
-
-    //     const archivo: any = fs.readFileSync(`${pathIDsJson}`);
-    //     const archiObj: Archivo = JSON.parse(archivo);
-
-    //     const nuevoArray = archiObj.ids.filter(id => {
-    //         return id !== idRef;
-    //     });
-
-    //     archiObj.ids = nuevoArray;
-
-    //     const nuevoArhivo = JSON.stringify(archiObj);
-    //     fs.writeFileSync(`${pathIDsJson}`, nuevoArhivo);
-
-    // }
-
     sucursalModel.findByIdAndDelete(
       id,
       {},
@@ -279,66 +190,18 @@ export class Sucursal {
             mensaje: `Error al eliminar sucursal o no existe`,
             err,
           });
-        }
-
-        if (!sucursalDB) {
+        } else {
+          const server = Server.instance;
+          server.io.emit("cargar-sucursales", {
+            ok: true,
+          });
           return resp.json({
-            ok: false,
-            mensaje: `No existe la sucursal que desea eliminar`,
+            ok: true,
+            mensaje: `Sucursal eliminada`,
+            sucursalDB,
           });
         }
-
-        // const idRef = sucursalDB?.idReferencia || '';
-        // eliminarIDActual(idRef);
-
-        return resp.json({
-          ok: true,
-          mensaje: `Sucursal eliminada`,
-          sucursalDB,
-        });
       }
     );
   }
-
-  obtenerSucursalCriterio(req: Request, resp: Response): void {
-    const criterio: string = req.get("criterio") || "";
-    const regExpCrit = new RegExp(criterio, "i");
-
-    sucursalModel.find(
-      { nombre: regExpCrit },
-      (err: CallbackError, sucursalesDB: Document) => {
-        // estado: estado
-
-        if (err) {
-          return resp.json({
-            ok: false,
-            mensaje: `Error al búscar Sucursales o no existe ninguna`,
-            err,
-          });
-        }
-
-        if (!sucursalesDB) {
-          return resp.json({
-            ok: false,
-            mensaje: `No hay sucursales en la Base de datos`,
-          });
-        }
-
-        return resp.json({
-          ok: true,
-          sucursalesDB,
-        });
-      }
-    );
-  }
-}
-
-// Interfaz para manejar los datos del archivo idSucursal.json
-interface Archivo {
-  ids: Array<string>;
-}
-
-interface RespPromise {
-  ok: boolean;
-  data: string;
 }

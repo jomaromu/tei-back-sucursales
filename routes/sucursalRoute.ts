@@ -1,6 +1,6 @@
-import { Router, Request, Response } from 'express';
-import { crearUsuario, editarUsuario, eliminarUsuario, verificaToken } from '../auth/auth';
-import { Sucursal } from '../class/sucursalClass';
+import { Router, Request, Response } from "express";
+import { verificaToken } from "../auth/auth";
+import { Sucursal } from "../class/sucursalClass";
 
 // instanciar el Router
 const sucursalRouter = Router();
@@ -8,66 +8,49 @@ const sucursalRouter = Router();
 // ==================================================================== //
 // Crear una sucursal
 // ==================================================================== //
-sucursalRouter.post('/nuevaSucursal', [verificaToken, crearUsuario], (req: Request, resp: Response) => {
-
+sucursalRouter.post(
+  "/nuevaSucursal",
+  [verificaToken],
+  (req: Request, resp: Response) => {
     const nuevaSucursal = new Sucursal();
     nuevaSucursal.nuevaSucursal(req, resp);
-});
+  }
+);
 
 // ==================================================================== //
 // Editar una sucursal
 // ==================================================================== //
-sucursalRouter.put('/editarSucursal', [verificaToken, editarUsuario], (req: Request, resp: Response) => {
-
+sucursalRouter.put(
+  "/editarSucursal",
+  [verificaToken],
+  (req: Request, resp: Response) => {
     const editarSucursal = new Sucursal();
     editarSucursal.editarSucursal(req, resp);
-});
-
-// ==================================================================== //
-// Obtener una sucursal por ID
-// ==================================================================== //
-sucursalRouter.get('/obtenerSucursalID', [verificaToken], (req: Request, resp: Response) => {
-
-    const obtenerSucursal = new Sucursal();
-    obtenerSucursal.obtenerSucursal(req, resp);
-});
-
-// ==================================================================== //
-// Obtener una sucursal por ID Referencia
-// ==================================================================== //
-sucursalRouter.get('/obtenerSucursalIDRef', [verificaToken], (req: Request, resp: Response) => {
-
-    const obtenerSucursal = new Sucursal();
-    obtenerSucursal.obtenerSucursalIdRef(req, resp);
-});
+  }
+);
 
 // ==================================================================== //
 // Obtener todas las sucursales
 // ==================================================================== //
-sucursalRouter.get('/obtenerTodasSucursales', [verificaToken], (req: Request, resp: Response) => {
-
-    const obtenerTodas = new Sucursal();
-    obtenerTodas.obtenerTodas(req, resp);
-
-});
-
-// ==================================================================== //
-// Obtener por criterio
-// ==================================================================== //
-sucursalRouter.get('/obtenerSucursalCriterio', [verificaToken], (req: Request, resp: Response) => {
-
-    const obtenerSucursalCriterio = new Sucursal();
-    obtenerSucursalCriterio.obtenerSucursalCriterio(req, resp);
-
-});
+sucursalRouter.get(
+  "/obtenerSucs",
+  [verificaToken],
+  (req: Request, resp: Response) => {
+    const obtenerSucs = new Sucursal();
+    obtenerSucs.obtenerSucs(req, resp);
+  }
+);
 
 // ==================================================================== //
 // Eliminar una sucursal
 // ==================================================================== //
-sucursalRouter.delete('/eliminarSucursal', [verificaToken, eliminarUsuario], (req: Request, resp: Response) => {
-
+sucursalRouter.delete(
+  "/eliminarSucursal",
+  [verificaToken],
+  (req: Request, resp: Response) => {
     const eliminarSucursal = new Sucursal();
     eliminarSucursal.eliminarSucursal(req, resp);
-});
+  }
+);
 
 export default sucursalRouter;
