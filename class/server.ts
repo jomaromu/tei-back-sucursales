@@ -1,7 +1,7 @@
 import express from 'express';
 import socketIO from 'socket.io';
 import http from 'http';
-import { environmnet } from '../environment/environment';
+import { environmnet } from '../environment/environment'; 
 
 export default class Server {
 

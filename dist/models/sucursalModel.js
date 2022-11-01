@@ -12,12 +12,13 @@ const Provincia = new Schema({
 });
 const sucursalSchema = new Schema({
     idCreador: { type: Schema.Types.ObjectId, ref: "userWorker" },
-    nombre: { type: String },
+    nombre: { type: String, unique: true },
     direccion: { type: String },
     telefono: { type: String },
     provincia: { type: Provincia },
     fecha_creacion: { type: String },
     estado: { type: Boolean, default: true },
+    foranea: { type: mongoose_1.default.Types.ObjectId, ref: "userWorker" },
 });
 // validacion para único elemento
 sucursalSchema.plugin(mongoose_unique_validator_1.default, { message: "El {PATH}, ya existe!!" });

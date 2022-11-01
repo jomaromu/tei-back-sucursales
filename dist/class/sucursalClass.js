@@ -28,14 +28,19 @@ class Sucursal {
     // Crear sucursal
     nuevaSucursal(req, resp) {
         const idCreador = new mongoose.Types.ObjectId(req.usuario._id);
+        const foranea = new mongoose.Types.ObjectId(req.body.foranea);
         const estado = req.body.estado;
         const nombre = req.body.nombre;
         const telefono = req.body.telefono;
         const provincia = req.body.provincia;
         const direccion = req.body.direccion;
-        const fecha = (0, moment_1.default)().format("DD-MM-YYYY");
+        const fecha = (0, moment_1.default)().format("DD/MM/YYYY");
+        const objError = {
+            mensaje: "",
+        };
         const nuevaSucursal = new sucursalModel_1.default({
-            idCreador: idCreador,
+            idCreador,
+            foranea,
             nombre,
             telefono,
             direccion,
@@ -46,10 +51,11 @@ class Sucursal {
         // guardar la sucursal
         nuevaSucursal.save((err, sucursalDB) => {
             if (err) {
+                objError.mensaje = err === null || err === void 0 ? void 0 : err.message;
                 return resp.json({
                     ok: false,
                     mensaje: `No se pudo crear la Sucursal`,
-                    err,
+                    err: objError,
                 });
             }
             else {
@@ -68,7 +74,11 @@ class Sucursal {
     // Obtener todas las sucursales
     obtenerSucs(req, resp) {
         return __awaiter(this, void 0, void 0, function* () {
+            const foranea = mongoose.Types.ObjectId(req.get("foranea"));
             const respSuc = yield sucursalModel_1.default.aggregate([
+                {
+                    $match: { foranea },
+                },
                 {
                     $lookup: {
                         from: "userworkers",
@@ -88,19 +98,23 @@ class Sucursal {
                 return resp.json({
                     ok: false,
                     mensaje: "Error al obtener sucursales",
+                    err: "Error al obtener sucursales",
                 });
             }
         });
     }
     // Editar sucursal
     editarSucursal(req, resp) {
-        const id = req.body.id;
+        const _id = new mongoose.Types.ObjectId(req.body.id);
+        const foranea = new mongoose.Types.ObjectId(req.body.foranea);
         const estado = req.body.estado;
         const nombre = req.body.nombre;
         const telefono = req.body.telefono;
         const provincia = req.body.provincia;
         const direccion = req.body.direccion;
-        // console.log(estado);
+        const objError = {
+            mensaje: "",
+        };
         const query = {
             nombre,
             telefono,
@@ -108,12 +122,13 @@ class Sucursal {
             provincia,
             estado,
         };
-        sucursalModel_1.default.findById(id, (err, sucursalDB) => {
+        sucursalModel_1.default.findOne({ $and: [{ _id }, { foranea }] }, (err, sucursalDB) => {
             if (err) {
+                objError.mensaje = err.message;
                 return resp.json({
                     ok: false,
                     mensaje: `Error interno`,
-                    err,
+                    err: objError,
                 });
             }
             if (!sucursalDB) {
@@ -137,42 +152,43 @@ class Sucursal {
             if (query.estado === undefined || query.estado === null) {
                 query.estado = sucursalDB.estado;
             }
-            sucursalModel_1.default.findByIdAndUpdate(id, query, { new: true }, (err, sucursalDB) => {
+            sucursalModel_1.default.updateOne({ $and: [{ _id }, { foranea }] }, query, { new: true }, (err, sucursalDB) => {
                 if (err) {
+                    objError.mensaje = err.message;
                     return resp.json({
                         ok: false,
                         mensaje: `No se pudo editar la Sucursal`,
-                        err,
+                        err: objError.mensaje,
                     });
                 }
-                if (!sucursalDB) {
+                else {
+                    const server = server_1.default.instance;
+                    server.io.emit("cargar-sucursales", {
+                        ok: true,
+                    });
                     return resp.json({
-                        ok: false,
-                        mensaje: `No existe la sucursal que quiere Editar`,
-                        err,
+                        ok: true,
+                        mensaje: `Sucursal actualizada`,
+                        sucursalDB,
                     });
                 }
-                const server = server_1.default.instance;
-                server.io.emit("cargar-sucursales", {
-                    ok: true,
-                });
-                return resp.json({
-                    ok: true,
-                    mensaje: `Sucursal actualizada`,
-                    sucursalDB,
-                });
             });
         });
     }
     // Eliminar una sucursal
     eliminarSucursal(req, resp) {
-        const id = req.get("id");
-        sucursalModel_1.default.findByIdAndDelete(id, {}, (err, sucursalDB) => {
+        const _id = new mongoose.Types.ObjectId(req.get("id"));
+        const foranea = new mongoose.Types.ObjectId(req.get("foranea"));
+        const objError = {
+            mensaje: "",
+        };
+        sucursalModel_1.default.findOneAndDelete({ $and: [{ _id }, { foranea }] }, {}, (err, sucursalDB) => {
             if (err) {
+                objError.mensaje = err.message;
                 return resp.json({
                     ok: false,
                     mensaje: `Error al eliminar sucursal o no existe`,
-                    err,
+                    err: objError.mensaje,
                 });
             }
             else {

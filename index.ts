@@ -25,7 +25,7 @@ require("./models/workerModel");
 
 // conexion local
 mongoose.connect(
-  "mongodb://127.0.0.1:27017/todoImpresiones",
+  "mongodb://127.0.0.1:27017/angie",
   { autoIndex: false },
   (err: any) => {
     if (err) throw err;
@@ -34,7 +34,7 @@ mongoose.connect(
 );
 
 // usar las rutas
-server.app.use("/sucursales", sucursalRouter);
+server.app.use("/sucursales", sucursalRouter); 
 
 // correr servidor
 server.start(() => {
